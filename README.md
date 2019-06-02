@@ -3,3 +3,5 @@
 in Chainer
 
 original repo: https://github.com/tensorflow/tpu/tree/master/models/official/efficientnet
+
+[EfficientNetを再現したい](https://nattochaduke.github.io/blog/posts/2019_6_2/)
