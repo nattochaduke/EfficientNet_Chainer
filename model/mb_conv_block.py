@@ -118,8 +118,8 @@ class MBConvBlock(chainer.Chain):
         h = self.project_conv(h)
 
         if self.stride == 1 and x.shape[1] == h.shape[1]:
-            #if self.drop_ratio > 0:
-            #    h = drop_connect(h, p=self.drop_ratio)
+            if self.drop_ratio > 0:
+                h = drop_connect(h, p=self.drop_ratio)
             h = x + h
         return h
 
