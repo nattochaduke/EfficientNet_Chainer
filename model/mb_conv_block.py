@@ -17,8 +17,6 @@ from chainercv.links.connection import Conv2DBNActiv
 from .depthwise_conv_2d_bn_activ import DepthwiseConv2DBNActiv
 from functions.drop_connect import drop_connect
 
-DTYPE = np.float32
-
 
 class SEBlock(chainer.Chain):
     def __init__(self, n_channel, squeeze, act):

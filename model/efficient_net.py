@@ -96,6 +96,10 @@ class EfficientNet(PickableSequentialChain):
             {'num_repeat': 1, 'ksize': 3, 'stride': 1, 'expand_ratio': 6, 'in_channels': 192, 'out_channels': 320,
              'se_ratio': 0.25},
         ]
+    # The resolutions in stages contradicts between paper and official repo.
+    # stage 1 (stem) -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8-> 9 (head and fc)
+    #      224         112  112  56   28   28   14   7    7  (paper)
+    #      224         112  112  56   28   14   14   7    7  (official and this repo)
 
     def __init__(self, name='b0', act='swish', comm=None):
 
