@@ -70,7 +70,9 @@ class EfficientNet(PickableSequentialChain):
                          'dropout_ratio': params[3],
                          'batch_norm_momentum': 0.99,
                          'batch_norm_epsilon': 1e-3,
-                         'drop_connect_ratio': 0.2,  # Is not this used?
+                         'drop_connect_ratio': 0.2, # In the repo this is set 0.2 but in the paper
+                                                    # page 7, left column it is set 0.3.
+                                                    # And seems this value is never used.
                          'classes': 1000,
                          'depth_divisor': 8,
                          'min_depth': None,
@@ -126,8 +128,10 @@ class EfficientNet(PickableSequentialChain):
                 bn_kwargs=bn_kwargs
             )
 
+            total_length = sum([ba['num_repeat'] for ba in self._block_args])
+            drop_ratios = np.linspace(0, global_params['drop_connect_ratio'], total_length)
+            blocks_cnt = 0
             for i, block_args in enumerate(self._block_args):
-
                 in_channels = round_channels(block_args['in_channels'], self._global_params)
                 out_channels = round_channels(block_args['out_channels'], self._global_params)
                 num_repeat = round_repeats(block_args['num_repeat'], self._global_params)
@@ -136,13 +140,9 @@ class EfficientNet(PickableSequentialChain):
                 expand_ratio = block_args['expand_ratio']
                 se_ratio = block_args['se_ratio']
                 block = RepeatedMBConvBlock(in_channels, out_channels, ksize, stride, num_repeat, expand_ratio, se_ratio,
+                                            drop_ratios=drop_ratios[blocks_cnt: blocks_cnt+num_repeat],
                                             global_params=self._global_params, act=act, initialW=initialW, bn_kwargs=bn_kwargs)
                 setattr(self, f'block{1+i}', block)
-                #drop_rate = self._global_params['drop_connect_ratio']
-                #if drop_rate:
-                #    drop_rate *= float(i)/ len(self._block_args)
-                #    pass # drop_connect?
-
             # Head part
             in_channels = out_channels
             out_channels = round_channels(1280, self._global_params)

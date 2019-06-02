@@ -15,6 +15,7 @@ import chainer.links as L
 from chainercv.links.connection import Conv2DBNActiv
 
 from .depthwise_conv_2d_bn_activ import DepthwiseConv2DBNActiv
+from functions.drop_connect import drop_connect
 
 DTYPE = np.float32
 
@@ -46,7 +47,7 @@ class MBConvBlock(chainer.Chain):
 
     """
 
-    def __init__(self, in_channels, out_channels, ksize, stride, expand_ratio, se_ratio, global_params=None,
+    def __init__(self, in_channels, out_channels, ksize, stride, expand_ratio, se_ratio, drop_ratio, global_params=None,
                  act=lambda x: x*F.sigmoid(x), initialW=None, bn_kwargs=None):
         """Initializes a MBConv block.
         Args:
@@ -62,6 +63,7 @@ class MBConvBlock(chainer.Chain):
         self.stride = stride
         self.has_se = (se_ratio is not None) and (se_ratio > 0) and (se_ratio <= 1)
         self.relu_fn = act
+        self.drop_ratio = drop_ratio
 
         mid_channels = in_channels * expand_ratio
         with self.init_scope():
@@ -114,21 +116,31 @@ class MBConvBlock(chainer.Chain):
         if self.has_se:
             h = self.seblock(h)
         h = self.project_conv(h)
+
+        if self.stride == 1 and x.shape[1] == h.shape[1]:
+            #if self.drop_ratio > 0:
+            #    h = drop_connect(h, p=self.drop_ratio)
+            h = x + h
         return h
 
 
 class RepeatedMBConvBlock(chainer.Chain):
-    def __init__(self, in_channels, out_channels, ksize, stride, num_repeat, expand_ratio, se_ratio, global_params=None,
+    def __init__(self, in_channels, out_channels, ksize, stride, num_repeat, expand_ratio, se_ratio,
+                 drop_ratios=None, global_params=None,
                  act=lambda x: x * F.sigmoid(x), initialW=None, bn_kwargs=None):
         self.num_repeat = num_repeat
         super(RepeatedMBConvBlock, self).__init__()
+        if drop_ratios is None:
+            drop_ratios = [0] * self.num_repeat
         with self.init_scope():
-            self.link0 = MBConvBlock(in_channels, out_channels, ksize, stride, expand_ratio, se_ratio, global_params, act, initialW, bn_kwargs)
+            self.link0 = MBConvBlock(in_channels, out_channels, ksize, stride, expand_ratio, se_ratio, drop_ratios[0],
+                                     global_params, act, initialW, bn_kwargs)
             in_channels = out_channels
             stride = 1
             if num_repeat > 1:
                 for i in range(1, num_repeat):
-                    link = MBConvBlock(in_channels, out_channels, ksize, stride, expand_ratio, se_ratio, global_params, act, initialW, bn_kwargs)
+                    link = MBConvBlock(in_channels, out_channels, ksize, stride, expand_ratio, se_ratio, drop_ratios[i],
+                                       global_params, act, initialW, bn_kwargs)
                     setattr(self, f'link{i}', link)
 
     def forward(self, x):
