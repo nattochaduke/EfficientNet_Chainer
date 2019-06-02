@@ -20,14 +20,13 @@ DTYPE = np.float32
 
 
 class SEBlock(chainer.Chain):
-    def __init__(self, n_channel, ratio, act):
+    def __init__(self, n_channel, squeeze, act):
         super(SEBlock, self).__init__()
         self.act = act
-        reduction_size = n_channel // ratio
 
         with self.init_scope():
-            self.down = L.Linear(n_channel, reduction_size)
-            self.up = L.Linear(reduction_size, n_channel)
+            self.down = L.Linear(n_channel, squeeze)
+            self.up = L.Linear(squeeze, n_channel)
 
     def forward(self, u):
         B, C, H, W = u.shape
@@ -66,6 +65,7 @@ class MBConvBlock(chainer.Chain):
 
         mid_channels = in_channels * expand_ratio
         with self.init_scope():
+            squeeze = int(in_channels * se_ratio)
             if expand_ratio != 1:
                 self.expand_conv = Conv2DBNActiv(
                     in_channels=in_channels,
@@ -91,9 +91,8 @@ class MBConvBlock(chainer.Chain):
                 initialW=initialW,
                 activ=act,
                 bn_kwargs=bn_kwargs)
-
             if self.has_se: # In official implementation they use 2d convolution to squeeze-and-expad(excite).
-                self.seblock = SEBlock(mid_channels, int(1/se_ratio), act)
+                self.seblock = SEBlock(mid_channels, squeeze, act)
 
             self.project_conv = Conv2DBNActiv(
                     in_channels=mid_channels,
