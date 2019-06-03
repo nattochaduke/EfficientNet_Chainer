@@ -14,6 +14,8 @@ from chainer.training import extensions
 import chainermn
 from chainerui.utils import save_args
 
+from chainer_profutil import create_marked_profile_optimizer
+
 from model.efficient_net import EfficientNet
 from datasets.datasets import ImageNetDataset
 from datasets.augmentations import get_transforms
@@ -64,6 +66,7 @@ def main():
                         help='Validation minibatch size')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--communicator', default='pure_nccl')
+    parser.add_argument('--profile', action='store_true')
     parser.set_defaults(test=False)
     args = parser.parse_args()
 
@@ -116,6 +119,9 @@ def main():
     # Create a multi node optimizer from a standard Chainer optimizer.
     optimizer = chainermn.create_multi_node_optimizer(
         chainer.optimizers.RMSprop(lr=0.256, alpha=0.9), comm)
+    if args.profile:
+        optimizer = create_marked_profile_optimizer(optimizer, sync=False)
+        args.epoch = 0.0001 #
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(1e-5))
 
