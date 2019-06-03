@@ -21,7 +21,8 @@ from model.efficient_net import EfficientNet
 from datasets.datasets import ImageNetDataset
 from datasets.augmentations import get_transforms
 
-
+chainer.global_config.autotune = True
+chainer.global_config.type_check = False
 
 # chainermn.create_multi_node_evaluator can be also used with user customized
 # evaluator classes that inherit chainer.training.extensions.Evaluator.
