@@ -8,11 +8,12 @@ mean = (123, 117, 104)
 
 
 class ImageNetDataset(DatasetMixin):
-    def __init__(self, root, file):
+    def __init__(self, root='../ssd/imagenet', mode='train'):
+        file = os.path.join(root, f'{mode}.txt')
         with open(file, 'r') as f:
             data = f.read().splitlines()
         data = [line.split() for line in data]
-        data = [[os.path.join(root, name), int(label)] for [name, label] in data]
+        data = [[os.path.join(root, f'ILSVRC/Data/CLS-LOC/{mode}', name), int(label)] for [name, label] in data]
         self._pairs = data
         self._length = len(data)
 
