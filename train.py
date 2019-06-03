@@ -14,6 +14,7 @@ from chainer.training import extensions
 
 import chainermn
 from chainerui.utils import save_args
+from chainercv.links.model.senet import SEResNeXt50
 
 from model.efficient_net import EfficientNet
 from datasets.datasets import ImageNetDataset
@@ -40,8 +41,8 @@ def main():
     if not chainer.cuda.available:
         raise RuntimeError('ImageNet requires GPU support.')
 
-    archs = [f'b{i}' for i in range(8)]
-    patchsizes = {'b0': 224, 'b1': 240, 'b2': 260, 'b3': 300, 'b4': 380, 'b5': 456, 'b6': 528, 'b7': 600}
+    archs = [f'b{i}' for i in range(8)] + ['se']
+    patchsizes = {'b0': 224, 'b1': 240, 'b2': 260, 'b3': 300, 'b4': 380, 'b5': 456, 'b6': 528, 'b7': 600, 'se': 224}
 
     parser = argparse.ArgumentParser(
         description='Learning convnet from ILSVRC2012 dataset')
@@ -86,7 +87,10 @@ def main():
         print(f'BatchNorm is {mode}')
         print('==========================================')
 
-    model = EfficientNet(args.arch, workerwisebn=args.workerwisebn)
+    if args.arch != 'se':
+        model = EfficientNet(args.arch, workerwisebn=args.workerwisebn)
+    else:
+        model = SEResNeXt50()
     model = L.Classifier(model)
     if args.initmodel:
         print('Load model from', args.initmodel)
