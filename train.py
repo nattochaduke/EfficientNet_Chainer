@@ -12,7 +12,7 @@ from chainer import training
 from chainer.training import extensions
 
 import chainermn
-
+from chainerui.utils import save_args
 
 from model.efficient_net import EfficientNet
 from datasets.datasets import ImageNetDataset
@@ -116,9 +116,10 @@ def main():
     # Create a multi node optimizer from a standard Chainer optimizer.
     optimizer = chainermn.create_multi_node_optimizer(
         chainer.optimizers.RMSprop(lr=0.256, alpha=0.9), comm)
-    optimizer.add_hook(chainer.optimizer.WeightDecay(1e-5))
     optimizer.setup(model)
+    optimizer.add_hook(chainer.optimizer.WeightDecay(1e-5))
 
+    save_args(args, args.out)
     # Set up a trainer
     updater = training.StandardUpdater(train_iter, optimizer, device=device)
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), args.out)
