@@ -66,6 +66,7 @@ def main():
                         help='Root directory path of image files')
     parser.add_argument('--val_batchsize', '-b', type=int, default=64,
                         help='Validation minibatch size')
+    parser.add_argument('--synchronizedbn', action='store_false')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--communicator', default='pure_nccl')
     parser.add_argument('--profile', action='store_true')
@@ -83,9 +84,11 @@ def main():
         print('Using {} arch'.format(args.arch))
         print('Num Minibatch-size: {}'.format(args.batchsize))
         print('Num epoch: {}'.format(args.epoch))
+        mode = 'synchronized' if args.synchronizedbn else 'workerwise'
+        print(f'BatchNorm is {mode}')
         print('==========================================')
 
-    model = EfficientNet(args.arch)
+    model = EfficientNet(args.arch, synchronizedbn=args.synchronizedbn)
     model = L.Classifier(model)
     if args.initmodel:
         print('Load model from', args.initmodel)
@@ -158,7 +161,7 @@ def main():
             'epoch', 'iteration', 'main/loss', 'validation/main/loss',
             'main/accuracy', 'validation/main/accuracy', 'lr'
         ]), trigger=log_interval)
-        #trainer.extend(extensions.ProgressBar(update_interval=10))
+        trainer.extend(extensions.ProgressBar(update_interval=10))
 
     if args.resume:
         chainer.serializers.load_npz(args.resume, trainer)
