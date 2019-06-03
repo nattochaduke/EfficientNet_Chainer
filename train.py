@@ -68,7 +68,6 @@ def main():
     parser.add_argument('--workerwisebn', action='store_true')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--communicator', default='pure_nccl')
-    parser.add_argument('--profile', action='store_true')
     parser.add_argument('--no_autoaugment', action='store_true')
     parser.set_defaults(test=False)
     args = parser.parse_args()
@@ -128,11 +127,10 @@ def main():
     # Create a multi node optimizer from a standard Chainer optimizer.
     optimizer = chainermn.create_multi_node_optimizer(
         chainer.optimizers.RMSprop(lr=0.256, alpha=0.9), comm)
-    if args.profile:
-        args.epoch = 0.0001 #
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(1e-5))
 
+    args.out = f'experiments/{args.arch}' + args.out
     save_args(args, args.out)
     # Set up a trainer
     updater = training.StandardUpdater(train_iter, optimizer, device=device)
