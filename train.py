@@ -69,6 +69,7 @@ def main():
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--communicator', default='pure_nccl')
     parser.add_argument('--profile', action='store_true')
+    parser.add_argument('--no_autoaugment', action='store_true')
     parser.set_defaults(test=False)
     args = parser.parse_args()
 
@@ -104,7 +105,7 @@ def main():
 
     patchsize = patchsizes[args.arch] if args.patchsize is None else args.patchsize
     patchsize = (patchsize, patchsize)
-    train_transform, val_transform, _ = get_transforms(patchsize)
+    train_transform, val_transform, _ = get_transforms(patchsize, no_autoaugment=args.no_autoaugment)
     if comm.rank == 0:
         train = ImageNetDataset(args.root, 'train')
         val = ImageNetDataset(args.root, 'val')

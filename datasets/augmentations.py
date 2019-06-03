@@ -8,7 +8,7 @@ from .autoaugment import ImageNetPolicy
 from .datasets import mean
 
 
-def get_transforms(patchsize=(224, 224), mean=mean, dtype=None):
+def get_transforms(patchsize=(224, 224), no_autoaugment=False, mean=mean, dtype=None):
     if dtype is None:
         dtype = chainer.get_dtype()
     policy = ImageNetPolicy(fillcolor=mean)
@@ -23,11 +23,12 @@ def get_transforms(patchsize=(224, 224), mean=mean, dtype=None):
         img = transforms.random_sized_crop(img)
         img = transforms.resize(img, patchsize)
         img = transforms.random_flip(img, x_random=True)
-        img = np.transpose(img, (1, 2, 0))
-        img = Image.fromarray(img)
-        img = policy(img)
-        img = np.asarray(img)
-        img = np.transpose(img, (2, 0, 1))
+        if not no_autoaugment:
+            img = np.transpose(img, (1, 2, 0))
+            img = Image.fromarray(img)
+            img = policy(img)
+            img = np.asarray(img)
+            img = np.transpose(img, (2, 0, 1))
         img = img - mean
         img = img.astype(dtype)
         return img, label
