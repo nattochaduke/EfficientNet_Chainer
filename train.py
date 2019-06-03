@@ -43,8 +43,6 @@ def main():
 
     parser = argparse.ArgumentParser(
         description='Learning convnet from ILSVRC2012 dataset')
-    parser.add_argument('train', help='Path to training image-label list file')
-    parser.add_argument('val', help='Path to validation image-label list file')
     parser.add_argument('--arch', '-a', choices=archs, default='b0')
     parser.add_argument('--patchsize', default=None, type=int, help='The input size of images. If not specifed,\
                                                                      architecture-wise default values wil be used.')
