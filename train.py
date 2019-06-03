@@ -15,8 +15,6 @@ from chainer.training import extensions
 import chainermn
 from chainerui.utils import save_args
 
-from chainer_profutil import create_marked_profile_optimizer
-
 from model.efficient_net import EfficientNet
 from datasets.datasets import ImageNetDataset
 from datasets.augmentations import get_transforms
@@ -66,7 +64,7 @@ def main():
                         help='Root directory path of image files')
     parser.add_argument('--val_batchsize', '-b', type=int, default=64,
                         help='Validation minibatch size')
-    parser.add_argument('--synchronizedbn', action='store_false')
+    parser.add_argument('--workerwisebn', action='store_true')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--communicator', default='pure_nccl')
     parser.add_argument('--profile', action='store_true')
@@ -84,11 +82,11 @@ def main():
         print('Using {} arch'.format(args.arch))
         print('Num Minibatch-size: {}'.format(args.batchsize))
         print('Num epoch: {}'.format(args.epoch))
-        mode = 'synchronized' if args.synchronizedbn else 'workerwise'
+        mode = 'workerwise' if args.workerwisebn else 'synchronized'
         print(f'BatchNorm is {mode}')
         print('==========================================')
 
-    model = EfficientNet(args.arch, synchronizedbn=args.synchronizedbn)
+    model = EfficientNet(args.arch, workerwisebn=args.workerwisebn)
     model = L.Classifier(model)
     if args.initmodel:
         print('Load model from', args.initmodel)
@@ -126,7 +124,6 @@ def main():
     optimizer = chainermn.create_multi_node_optimizer(
         chainer.optimizers.RMSprop(lr=0.256, alpha=0.9), comm)
     if args.profile:
-        optimizer = create_marked_profile_optimizer(optimizer, sync=False)
         args.epoch = 0.0001 #
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(1e-5))
