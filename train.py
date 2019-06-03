@@ -8,6 +8,7 @@ import numpy as np
 
 import chainer
 import chainer.cuda
+import chainer.links as L
 from chainer import training
 from chainer.training import extensions
 
@@ -84,6 +85,7 @@ def main():
         print('==========================================')
 
     model = EfficientNet(args.arch)
+    model = L.Classifier(model)
     if args.initmodel:
         print('Load model from', args.initmodel)
         chainer.serializers.load_npz(args.initmodel, model)
