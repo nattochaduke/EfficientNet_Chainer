@@ -63,9 +63,10 @@ def main():
                         help='Output directory')
     parser.add_argument('--root', '-R', default='../ssd/imagenet',
                         help='Root directory path of image files')
-    parser.add_argument('--val_batchsize', '-b', type=int, default=64,
+    parser.add_argument('--val_batchsize', '-b', type=int, default=32,
                         help='Validation minibatch size')
     parser.add_argument('--workerwisebn', action='store_true')
+    parser.add_argument('--no_dropconnect', action='store_true')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--communicator', default='pure_nccl')
     parser.add_argument('--no_autoaugment', action='store_true')
@@ -88,7 +89,7 @@ def main():
         print('==========================================')
 
     if args.arch != 'se':
-        model = EfficientNet(args.arch, workerwisebn=args.workerwisebn)
+        model = EfficientNet(args.arch, workerwisebn=args.workerwisebn, no_dropconnect=args.no_dropconnect)
     else:
         model = SEResNeXt50()
     model = L.Classifier(model)

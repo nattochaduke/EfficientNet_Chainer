@@ -101,7 +101,7 @@ class EfficientNet(PickableSequentialChain):
     #      224         112  112  56   28   28   14   7    7  (paper)
     #      224         112  112  56   28   14   14   7    7  (official and this repo)
 
-    def __init__(self, name='b0', act='swish', comm=None, workerwisebn=False):
+    def __init__(self, name='b0', act='swish', comm=None, workerwisebn=False, no_dropconnect=False):
 
         global_params = self.get_global_params(name)
         if act == 'swish':
@@ -116,6 +116,8 @@ class EfficientNet(PickableSequentialChain):
                      'decay': global_params['batch_norm_momentum']}
         if (not workerwisebn) and (comm is not None):
             bn_kwargs['comm'] = comm
+        if no_dropconnect:
+            self._global_params['drop_connect_ratio'] = 0
 
         # stem part
         with self.init_scope():
