@@ -164,11 +164,13 @@ def main():
         name='imagenet-example', comm=comm)
     checkpointer.maybe_load(trainer, optimizer)
     trainer.extend(checkpointer, trigger=checkpoint_interval)
-    trainer.extend(extensions.ExponentialShift('lr', 0.97), trigger=(2.6, 'epoch'))
+
     if args.cosine_annealing:
         schedule = lr_schedules.CosineLRSchedule(args.lr)
         if args.optimizer in ['MomentumSGD', 'Corrected']:
             trainer.extend(lr_schedules.LearningRateScheduler(schedule))
+    else:
+        trainer.extend(extensions.ExponentialShift('lr', 0.97), trigger=(2.6, 'epoch'))
 
     # Create a multi node evaluator from an evaluator.
     evaluator = TestModeEvaluator(val_iter, model, device=device)
