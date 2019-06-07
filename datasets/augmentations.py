@@ -35,6 +35,8 @@ def get_transforms(patchsize=(224, 224), no_autoaugment=False, mean=mean, dtype=
 
     def val_transform(sample):
         img, label = sample
+        if len(img.shape) == 2: # Grayscale
+            img = np.stack([img, img, img], 2)
         img = np.transpose(img, (2, 0, 1))
         img = transforms.resize(img, resize_size)
         img = transforms.center_crop(img, patchsize)
@@ -44,6 +46,8 @@ def get_transforms(patchsize=(224, 224), no_autoaugment=False, mean=mean, dtype=
 
     def test_transform(sample):
         img = sample
+        if len(img.shape) == 2: # Grayscale
+            img = np.stack([img, img, img], 2)
         img = np.transpose(img, (2, 0, 1))
         img = transforms.resize(img, resize_size)
         img = transforms.center_crop(img, patchsize)
