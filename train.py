@@ -19,6 +19,8 @@ from chainercv.links.model.senet import SEResNeXt50
 from model.efficient_net import EfficientNet
 from datasets.datasets import ImageNetDataset
 from datasets.augmentations import get_transforms
+from functions.soft import soft_softmax_cross_entropy, soft_accuracy
+from functions import lr_schedules
 
 chainer.global_config.autotune = True
 chainer.global_config.type_check = False
@@ -51,6 +53,10 @@ def main():
                                                                      architecture-wise default values wil be used.')
     parser.add_argument('--batchsize', '-B', type=int, default=32,
                         help='Learning minibatch size')
+    parser.add_argument('--optimizer', default='RMSProp')
+    parser.add_argument('--lr', default=0.256, type=float)
+    parser.add_argument('--cosine_annealing', action='store_true')
+    parser.add_argument('--soft_label', action='store_true')
     parser.add_argument('--epoch', '-E', type=int, default=350,
                         help='Number of epochs to train')
     parser.add_argument('--initmodel',
@@ -88,11 +94,19 @@ def main():
         print(f'BatchNorm is {mode}')
         print('==========================================')
 
+
+    if args.soft_label:
+        accfun = soft_accuracy
+        lossfun = soft_softmax_cross_entropy
+    else:
+        accfun = F.accuracy
+        lossfun = F.softmax_cross_entropy
+
     if args.arch != 'se':
         model = EfficientNet(args.arch, workerwisebn=args.workerwisebn, no_dropconnect=args.no_dropconnect)
     else:
         model = SEResNeXt50()
-    model = L.Classifier(model)
+    model = L.Classifier(model, lossfun=lossfun, accfun=accfun)
     if args.initmodel:
         print('Load model from', args.initmodel)
         chainer.serializers.load_npz(args.initmodel, model)
@@ -126,8 +140,13 @@ def main():
         val, args.val_batchsize, repeat=False, n_processes=args.loaderjob)
 
     # Create a multi node optimizer from a standard Chainer optimizer.
-    optimizer = chainermn.create_multi_node_optimizer(
-        chainer.optimizers.RMSprop(lr=0.256, alpha=0.9), comm)
+    if args.optimizer.lower() == 'rmsprop':
+        optimizer = chainer.optimizers.RMSprop(lr=args.lr, alpha=0.9)
+    elif args.optimizer.lower() == 'momentumsgd':
+        optimizer = chainer.optimizers.MomentumSGD(lr=args.lr)
+    elif args.optimizer.lower() == 'corrected':
+        optimizer = chainer.optimizers.CorrectedMomentumSGD(lr=args.lr)
+    optimizer = chainermn.create_multi_node_optimizer(optimizer, comm)
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(1e-5))
 
@@ -146,6 +165,10 @@ def main():
     checkpointer.maybe_load(trainer, optimizer)
     trainer.extend(checkpointer, trigger=checkpoint_interval)
     trainer.extend(extensions.ExponentialShift('lr', 0.97), trigger=(2.6, 'epoch'))
+    if args.cosine_annealing:
+        schedule = lr_schedules.CosineLRSchedule(args.lr)
+        if args.optimizer in ['MomentumSGD', 'Corrected']:
+            trainer.extend(lr_schedules.LearningRateScheduler(schedule))
 
     # Create a multi node evaluator from an evaluator.
     evaluator = TestModeEvaluator(val_iter, model, device=device)
