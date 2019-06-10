@@ -157,8 +157,8 @@ def main():
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), args.out)
 
     checkpoint_interval = (10, 'iteration') if args.test else (1, 'epoch')
-    val_interval = (10, 'iteration') if args.test else (1, 'epoch')
-    log_interval = (10, 'iteration') if args.test else (1, 'epoch')
+    val_interval = (10, 'iteration') if args.test else (2, 'epoch')
+    log_interval = (10, 'iteration') if args.test else (2, 'epoch')
 
     checkpointer = chainermn.create_multi_node_checkpointer(
         name='imagenet-example', comm=comm)
@@ -181,13 +181,15 @@ def main():
     # (Otherwise, there would just be repeated outputs.)
     if comm.rank == 0:
         trainer.extend(extensions.DumpGraph('main/loss'))
+        trainer.extend(extensions.snapshot_object(
+            model, 'model_iter_{.updater.iteration}'), trigger=val_interval)
         trainer.extend(extensions.LogReport(trigger=log_interval))
         trainer.extend(extensions.observe_lr(), trigger=log_interval)
         trainer.extend(extensions.PrintReport([
             'epoch', 'iteration', 'main/loss', 'validation/main/loss',
             'main/accuracy', 'validation/main/accuracy', 'lr'
         ]), trigger=log_interval)
-        trainer.extend(extensions.ProgressBar(update_interval=10))
+        trainer.extend(extensions.ProgressBar(update_interval=100))
 
     if args.resume:
         chainer.serializers.load_npz(args.resume, trainer)

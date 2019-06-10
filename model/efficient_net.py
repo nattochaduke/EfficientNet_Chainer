@@ -47,6 +47,13 @@ def round_repeats(repeats, global_params):
     return int(math.ceil(multiplier * repeats))
 
 
+class EfficientNetTrainingLink(chainer.Chain):
+    def __init__(self, name='b0', act='swish', comm=None, workerwisebn=False, no_dropconnect=False):
+        super(EfficientNetTrainingLink, self).__init__()
+        with self.init_scope():
+            self.net = EfficientNet(name, act, comm, workerwisebn, no_dropconnect)
+
+
 class EfficientNet(PickableSequentialChain):
 
     def get_global_params(self, model_name):
@@ -167,4 +174,4 @@ class EfficientNet(PickableSequentialChain):
             self.fc = L.Linear(out_channels, self._global_params['classes'])
             if self._global_params['dropout_ratio'] > 0:
                 self.dropout = lambda x: F.dropout(x, self._global_params['dropout_ratio'])
-            self.prob = F.softmax
+            #self.prob = F.softmax
