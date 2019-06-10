@@ -24,6 +24,7 @@ from functions import lr_schedules
 
 chainer.global_config.autotune = True
 chainer.global_config.type_check = False
+chainer.global_config.cudnn_fast_batch_normalization = True
 
 # chainermn.create_multi_node_evaluator can be also used with user customized
 # evaluator classes that inherit chainer.training.extensions.Evaluator.
