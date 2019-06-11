@@ -31,7 +31,7 @@ def get_transforms(patchsize=(224, 224), no_autoaugment=False, mean=mean, soft=F
         img = img - mean
         img = img.astype(dtype)
         if soft:
-            label = hard_to_soft(label)
+            label = hard_to_soft(label, dtype=dtype)
         return img, label
 
     def val_transform(sample):
@@ -42,7 +42,7 @@ def get_transforms(patchsize=(224, 224), no_autoaugment=False, mean=mean, soft=F
         img = img - mean
         img = img.astype(dtype)
         if soft:
-            label = hard_to_soft(label)
+            label = hard_to_soft(label, dtype=dtype)
         return img, label
 
     def test_transform(sample):

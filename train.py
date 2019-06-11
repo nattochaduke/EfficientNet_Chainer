@@ -72,10 +72,11 @@ def main():
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--communicator', default='pure_nccl')
     parser.add_argument('--no_autoaugment', action='store_true')
+    parser.add_argument('--dtype', default='float32', choices=['mixed16', 'float32'], help='For now do not use mixed16')
     parser.set_defaults(test=False)
     args = parser.parse_args()
 
-
+    chainer.global_config.dtype = args.dtype
     comm = chainermn.create_communicator(args.communicator)
     device = comm.intra_rank
 
@@ -115,7 +116,8 @@ def main():
 
     patchsize = patchsizes[args.arch] if args.patchsize is None else args.patchsize
     patchsize = (patchsize, patchsize)
-    train_transform, val_transform, _ = get_transforms(patchsize, no_autoaugment=args.no_autoaugment, soft=args.soft_label)
+    train_transform, val_transform, _ = get_transforms(patchsize, no_autoaugment=args.no_autoaugment,
+                                                       soft=args.soft_label)
     if comm.rank == 0:
         train = ImageNetDataset(args.root, 'train')
         val = ImageNetDataset(args.root, 'val')
