@@ -1,6 +1,12 @@
 import chainer.functions as F
 from chainer import backend
 from chainer.functions.evaluation.accuracy import Accuracy
+import numpy as np
+
+def hard_to_soft(label, classes=1000):
+    result = [0.1 / (classes-1)] * classes
+    result[label] = 0.9
+    return np.array(result).astype(np.float32)
 
 def soft_softmax_cross_entropy(preds, soft_labels):
     """

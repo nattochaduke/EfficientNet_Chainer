@@ -1,13 +1,8 @@
 from __future__ import print_function
 import argparse
-import multiprocessing
-import random
-import sys
-
-import numpy as np
-
 import chainer
 import chainer.cuda
+import chainer.functions as F
 import chainer.links as L
 from chainer import training
 from chainer.training import extensions
@@ -120,7 +115,7 @@ def main():
 
     patchsize = patchsizes[args.arch] if args.patchsize is None else args.patchsize
     patchsize = (patchsize, patchsize)
-    train_transform, val_transform, _ = get_transforms(patchsize, no_autoaugment=args.no_autoaugment)
+    train_transform, val_transform, _ = get_transforms(patchsize, no_autoaugment=args.no_autoaugment, soft=args.soft_label)
     if comm.rank == 0:
         train = ImageNetDataset(args.root, 'train')
         val = ImageNetDataset(args.root, 'val')
