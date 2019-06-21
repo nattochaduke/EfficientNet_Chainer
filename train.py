@@ -138,6 +138,7 @@ def main():
         val, args.val_batchsize, repeat=False, n_processes=args.loaderjob)
 
     # Create a multi node optimizer from a standard Chainer optimizer.
+    symbol = 'lr'
     if args.optimizer.lower() == 'rmsprop':
         optimizer = chainer.optimizers.RMSprop(lr=args.lr, alpha=0.9)
     elif args.optimizer.lower() == 'momentumsgd':
@@ -146,6 +147,7 @@ def main():
         optimizer = chainer.optimizers.CorrectedMomentumSGD(lr=args.lr)
     elif args.optimizer.lower() == 'adabound':
         optimizer = chainer.optimizers.AdaBound(alpha=args.lr, final_lr=0.5)
+        symbol = 'alpha'
     optimizer = chainermn.create_multi_node_optimizer(optimizer, comm)
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(1e-5))
@@ -170,7 +172,7 @@ def main():
         if args.optimizer in ['MomentumSGD', 'Corrected']:
             trainer.extend(lr_schedules.LearningRateScheduler(schedule))
     else:
-        trainer.extend(extensions.ExponentialShift('lr', 0.97), trigger=(2.6, 'epoch'))
+        trainer.extend(extensions.ExponentialShift(symbol, 0.97), trigger=(2.6, 'epoch'))
 
     # Create a multi node evaluator from an evaluator.
     evaluator = TestModeEvaluator(val_iter, model, device=device)
