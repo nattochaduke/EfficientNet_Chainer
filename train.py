@@ -52,6 +52,8 @@ def main():
     parser.add_argument('--optimizer', default='RMSProp')
     parser.add_argument('--lr', default=0.256, type=float)
     parser.add_argument('--cosine_annealing', action='store_true')
+    parser.add_argument('--exponent', type=float, default=0.97)
+    parser.add_argument('--exponent_trigger', type=float, default=2.6)
     parser.add_argument('--soft_label', action='store_true')
     parser.add_argument('--epoch', '-E', type=int, default=350,
                         help='Number of epochs to train')
@@ -172,7 +174,7 @@ def main():
         if args.optimizer in ['MomentumSGD', 'Corrected']:
             trainer.extend(lr_schedules.LearningRateScheduler(schedule))
     else:
-        trainer.extend(extensions.ExponentialShift(symbol, 0.97), trigger=(2.6, 'epoch'))
+        trainer.extend(extensions.ExponentialShift(symbol, args.exponent), trigger=(args.exponent_trigger, 'epoch'))
 
     # Create a multi node evaluator from an evaluator.
     evaluator = TestModeEvaluator(val_iter, model, device=device)
