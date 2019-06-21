@@ -144,6 +144,8 @@ def main():
         optimizer = chainer.optimizers.MomentumSGD(lr=args.lr)
     elif args.optimizer.lower() == 'corrected':
         optimizer = chainer.optimizers.CorrectedMomentumSGD(lr=args.lr)
+    elif args.optimizer.lower() == 'adabound':
+        optimizer = chainer.optimizers.AdaBound(alpha=args.lr, final_lr=0.5)
     optimizer = chainermn.create_multi_node_optimizer(optimizer, comm)
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(1e-5))
