@@ -180,7 +180,7 @@ def main():
     if comm.rank == 0:
         trainer.extend(extensions.DumpGraph('main/loss'))
         trainer.extend(extensions.snapshot_object(
-            model, 'model_iter_{.updater.iteration}'), trigger=val_interval)
+            model, 'model_iter_{.updater.iteration}.npz'), trigger=val_interval)
         trainer.extend(extensions.LogReport(trigger=log_interval))
         trainer.extend(extensions.observe_lr(), trigger=log_interval)
         trainer.extend(extensions.PrintReport([
